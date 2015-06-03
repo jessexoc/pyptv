@@ -1,0 +1,4 @@
+*.pyc
+env/
+api_docs/
+cached/
