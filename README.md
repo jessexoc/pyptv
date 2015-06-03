@@ -1,5 +1,7 @@
-# Disclamer
-I am not affiliated with PTV. This in not an official API client.
+A Python client for Public Transport Victoria's Timetable API: https://www.data.vic.gov.au/data/dataset/ptv-timetable-api
+
+#### Disclamer
+I am not affiliated with Public Transport Victoria. This in not an official API client.
 
 # Getting started
 
@@ -64,7 +66,7 @@ Let's say we missed this tram and so need to find bus stops nearby this one. All
      <BusStop: (25382) Blair St/Glenlyon Rd >,
      <BusStop: (25379) Police Complex/20 Dawson St >]
 
-TODO:
+### TODO:
 
 - More docs
 - Multi-api-call convenience methods for common operations
