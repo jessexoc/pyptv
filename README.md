@@ -5,7 +5,7 @@ I am not affiliated with PTV. This in not an official API client.
 
 ## API KEY
 Before you can make requests, you need to apply for an API key. This is done via email at this point in time.
-You can follow this [link](mailto:APIKeyRequest@ptv.vic.gov.au ?Subject=PTV%20Timetable%20API%20%u2013%20request%20for%20key&Body=Can%20I%20please%20get%20an%20API%20key%20for%20the%20PTV%20Timetable%20API%3F%0A%0ARegards%2C)
+You can follow this [link](mailto:APIKeyRequest@ptv.vic.gov.au ?Subject=PTV Timetable API - request for key&Body=Can%20I%20please%20get%20an%20API%20key%20for%20the%20PTV%20Timetable%20API%3F%0A%0ARegards%2C)
 
 ## Using the client
 
