@@ -121,7 +121,7 @@ class PTVClient(object):
 
         # only provide certain stop types if we are provided with a mode
         if mode is not None:
-            out = [stop for stop in stops if stop.transport_type == mode]
+            out = [stop for stop in out if stop.transport_type == mode]
         
         # enforce limit if provided
         if limit is not None:
