@@ -23,6 +23,11 @@ class Location(object):
                    "?cp={lat}~{lon}&lvl={zoom}&style=r"
         return base_url.format(lat=self.lat, lon=self.lon, zoom=zoom)
 
+    def openstreetmap(self, zoom=12):
+        base_url = "http://www.openstreetmap.org/" + \
+                   "?mlat={lat}&mlon={lon}&zoom={zoom}"
+        return base_url.format(lat=self.lat, lon=self.lon, zoom=zoom)
+
     def distance(self, location):
         """ Calculate distance (in km) to another location """
 
