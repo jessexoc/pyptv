@@ -49,8 +49,8 @@ class PTVClient(object):
         self.developer_id = developer_id
         self.api_key = api_key
 
-    def api_request(self, api_path, timed=True):
-        """ Call some api end point
+    def _api_request(self, api_path, timed=True):
+        """Call some api end point and return the raw response.
         API request will have proper signing key appended.
         """
 
@@ -93,27 +93,33 @@ class PTVClient(object):
     # API methods:
 
     def healthcheck(self):
-        """ send off a health check to check the status of the system, the
+        """Send off a health check to check the status of the system, the
         local clock and the API credentials.
         """
-        return self.api_request("/v2/healthcheck")
+        return self._api_request("/v2/healthcheck")
 
-    def stops_nearby(self, location, mode=None, limit=None, with_distance=False):
-        """ Get stops near a location.
-        location: one of (lat, lon), a Location object, or something that has a
-            location property (which would be a Location object)
-        mode: (optional) filter results for only this tramsport mode
-        limit: (optional) only return this many results
-        with_distance: (optional) return tuples of (Stop, distance)
+    def stops_nearby(self, location, mode=None, limit=None,
+                     with_distance=False):
+        """Return stops near a location.
+
+        Args:
+            location: one of (lat, lon), a Location object, or something that
+                    has a location property (which would be a Location object)
+            mode: (optional) filter results for only this tramsport mode
+            limit: (optional) only return this many results
+            with_distance: (optional) return tuples of (Stop, distance)
+        Returns:
+            List of stops or a list of tuples in the form (stop, distance) if
+            with_distance is True
         """
-
-        lat, lon = parse_location(location)
 
         base_path = "/v2/nearme/latitude/{lat}/longitude/{lon}"
 
+        lat, lon = parse_location(location)
+
         path = base_path.format(lat=lat, lon=lon)
 
-        stops = self.api_request(path)
+        stops = self._api_request(path)
 
         stop_factory = StopFactory(self)
 
@@ -122,7 +128,7 @@ class PTVClient(object):
         # only provide certain stop types if we are provided with a mode
         if mode is not None:
             out = [stop for stop in out if stop.transport_type == mode]
-        
+
         # enforce limit if provided
         if limit is not None:
             out = out[:limit]
@@ -135,18 +141,26 @@ class PTVClient(object):
 
     def transport_pois_by_map(self, poi, location1,
                               location2, griddepth, limit=20):
-        """ list of points of interest within a map grid defined by location1
-        & location2
-        poi: either a transport mode or outlet. A list of poi types can be
-            passed in as a comma separated
-        location1 & location2:
-            - are one of (lat, lon), a Location object, or something that has a
-              location property (which would be a Location object).
-            - define the top left corner (location1) and bottom right corner
-              (location2) of a rectangle on a map
-        griddepth: number of cell blocks per cluster
-        limit: minimum number of POIs required to create a cluster as well as
-            the maximum number of POIs returned
+        """Return a list of points of interest within a map grid defined by
+        location1 & location2
+
+        Arguments:
+            poi: either a transport mode or outlet. A list of poi types can be
+                passed in as a comma separated
+            location1 & location2:
+                - are one of (lat, lon), a Location object, or something that
+                  has a location property (which would be a Location object).
+                - define the top left corner (location1) and bottom right
+                  corner (location2) of a rectangle on a map
+            griddepth: number of cell blocks per cluster
+            limit: minimum number of POIs required to create a cluster as well
+                as the maximum number of POIs returned
+        Returns:
+            a dictionary in the format, the primary components being in the
+            'locations' value
+            {'locations': [ Stop or Outlet objects ],
+             '...'
+             }
         """
 
         lat1, lon1 = parse_location(location1)
@@ -162,7 +176,7 @@ class PTVClient(object):
                                 lat2=lat2, lon2=lon2,
                                 griddepth=griddepth, limit=limit)
 
-        data = self.api_request(path)
+        data = self._api_request(path)
 
         stop_factory = StopFactory(self)
         outlet_factory = OutletFactory(self)
@@ -186,12 +200,17 @@ class PTVClient(object):
         return out
 
     def search(self, term):
-        """ all stops and lines that match the search term
+        """All stops and lines that match the search term.
+
+        Arguments:
+            term: serch term
+        Returns:
+            list of Stops & Lines
         """
 
         path = "/v2/search/%s" % urllib.quote(term)
 
-        data = self.api_request(path)
+        data = self._api_request(path)
 
         stop_factory = StopFactory(self)
         line_factory = LineFactory(self)
@@ -218,7 +237,7 @@ class PTVClient(object):
         if name is not None:
             path += "?name=%s" % name
 
-        data = self.api_request(path)
+        data = self._api_request(path)
 
         line_factory = LineFactory(self)
 
@@ -229,9 +248,12 @@ class PTVClient(object):
         return out
 
     def stops_on_a_line(self, mode, line):
-        """ all the stops for a particular transport mode on a given line
-        mode: transport mode
-        line: the line_id of a particular line
+        """All stops for a particular transport mode on a given line
+        Arguments:
+            mode: transport mode
+            line: the line_id of a particular line
+        Returns:
+            List of stops.
         """
 
         base_path = "/v2/mode/{mode}/line/{line}/stops-for-line"
@@ -240,7 +262,7 @@ class PTVClient(object):
 
         path = base_path.format(mode=mode_id, line=line)
 
-        data = self.api_request(path)
+        data = self._api_request(path)
 
         stop_factory = StopFactory(self)
 
@@ -300,30 +322,38 @@ class PTVClient(object):
         return out
 
     def broad_next_departures(self, mode, stop, limit=5):
-        """ departure times at a particular stop, irrespective of line or
+        """Departure times at a particular stop, irrespective of line or
         direction.
-        mode: transport mode
-        stop: stop_id of a stop
-        limit: max results to return
+
+        Arguments:
+            mode: transport mode
+            stop: stop_id of a stop
+            limit: max results to return
+        Returns:
+            A list of departures
         """
 
         base_path = "/v2/mode/{mode}/stop/{stop}/" + \
                     "departures/by-destination/limit/{limit}"
         mode_id = self.MODES[mode]
         path = base_path.format(mode=mode_id, stop=stop, limit=limit)
-        departures = self.api_request(path)
+        departures = self._api_request(path)
 
         return self._process_departures(departures["values"])
 
     def specific_next_departures(self, mode, line, stop,
                                  direction, limit=5, for_utc=None):
-        """ departure times at a particular stop for a given line and direction
-        mode: transport mode
-        line: line_id of transport line
-        stop: stop_id of a stop on the line
-        direction: direction_id of run's direction
-        limit: max results to return
-        for_utc: (optional) date and time of the request
+        """Departure times at a particular stop for a given line and direction
+
+        Arguments:
+            mode: transport mode
+            line: line_id of transport line
+            stop: stop_id of a stop on the line
+            direction: direction_id of run's direction
+            limit: max results to return
+            for_utc: (optional) date and time of the request
+        Returns:
+            A list of departures
         """
 
         base_path = "/v2/mode/{mode}/line/{line}/stop/{stop}/" + \
@@ -337,7 +367,7 @@ class PTVClient(object):
         if for_utc is not None:
             path += "?for_utc=%s" % for_utc
 
-        departures = self.api_request(path)
+        departures = self._api_request(path)
 
         return self._process_departures(departures["values"])
 
@@ -354,17 +384,20 @@ class PTVClient(object):
         if for_utc is not None:
             path += "?for_utc=%s" % for_utc
 
-        departures = self.api_request(path)
+        departures = self._api_request(path)
 
         return self._process_departures(departures["values"])
 
-
     def stopping_pattern(self, mode, run, stop, for_utc=None):
-        """ stopping pattern for a particular run from a given stop
-        mode: transport mode
-        run: transport run_id
-        stop: stop_id of a stop
-        for_utc: (optional) date and time of the request
+        """Stopping pattern for a particular run from a given stop
+
+        Arguments:
+            mode: transport mode
+            run: transport run_id
+            stop: stop_id of a stop
+            for_utc: (optional) date and time of the request
+        Returns:
+            A list of departures
         """
 
         base_path = "/v2/mode/{mode}/run/{run}/stop/{stop}/stopping-pattern"
@@ -374,25 +407,28 @@ class PTVClient(object):
         if for_utc is not None:
             path += "?for_utc=%s" % for_utc
 
-        data = self.api_request(path)
+        data = self._api_request(path)
 
         return self._process_departures(data['values'])
 
     def disruptions(self, modes="general"):
-        """ planned and unplanned disruptions on the transport network.
-        modes: one or more of the following in a comma separted string format:
-            general
-            metro-bus
-            metro-train
-            metro-tram
-            regional-bus
-            regional-coach
-            regional-train
+        """Planned and unplanned disruptions on the transport network.
+
+        Arguments:
+            modes: one or more of the following in a comma separted string
+                   format:
+                       general
+                       metro-bus
+                       metro-train
+                       metro-tram
+                       regional-bus
+                       regional-coach
+                       regional-train
         """
 
         path = "/v2/disruptions/modes/%s" % modes
 
-        data = self.api_request(path)
+        data = self._api_request(path)
 
         factory = DisruptionFactory(self)
 
