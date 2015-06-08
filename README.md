@@ -1,6 +1,10 @@
 A Python client for Public Transport Victoria's Timetable API: https://www.data.vic.gov.au/data/dataset/ptv-timetable-api .
 This is not just a wrapper sending off reqests to the API and returning json. It encapsulates the API responses into classes that can be further interacted with.
 
+# Installation
+
+    pip install git+https://github.com/jessexoc/pyptv.git
+
 # Features
 - Returned objects are presented as classes (eg TramStop, BusLine, RetailOutlet)
 - Methods on classes that simplify subsequent calls (eg `TramStop.broad_next_departures()` vs `client.broad_next_departures(TramStop.mode, TramStop.stop_id)`)
